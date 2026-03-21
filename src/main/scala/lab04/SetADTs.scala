@@ -3,6 +3,11 @@ package scala.lab04
 import u04.datastructures.Sequences.*
 import Sequence.*
 
+import Trees.*
+import Trees.Tree.*
+import Trees.Tree.{add as treeAdd, contains as treeContains}
+import scala.annotation.tailrec
+
 object SetADTs:
   
   trait SetADT:
@@ -57,6 +62,59 @@ object SetADTs:
       def ===(other: Set[A]): Boolean =
         s.union(other).size() == s.size()
 
+  object TreeBasedSetADT extends SetADT:
+
+    opaque type Set[A] = Tree[A]
+
+    private given hashOrdering[A]: Ordering[A] with
+      def compare(x: A, y: A): Int =
+        if x == y then 0
+        else if x.hashCode < y.hashCode then -1
+        else 1
+
+    override def empty[A](): Set[A] = Empty()
+
+    extension [A](s: Tree[A])
+
+      def add(element: A): Set[A] = treeAdd(s)(element)(using hashOrdering)
+
+      override def contains(a: A): Boolean = treeContains(s)(a)(using hashOrdering)
+
+      override def union(other: Tree[A]): Set[A] =
+        def loop(t: Tree[A], acc: Set[A]): Set[A] = t match
+          case Empty() => acc
+          case Node(v, l, r) => loop(r, loop(l, acc.add(v)))
+        loop(other, s)
+
+
+      override def intersection(other: Set[A]): Set[A] = ???
+
+      override def remove(a: A): Set[A] = s match
+          case Empty() => Empty()
+          case Node(v, l, r) =>
+            val cmp = hashOrdering.compare(a, v)
+            if cmp == 0 then
+              if l == Empty() then r
+              else if r == Empty() then l
+              else
+                @tailrec
+                def findMin(t: Tree[A]): A = t match
+                  case Node(minV, Empty(), _) => minV
+                  case Node(_, left, _) => findMin(left)
+                  case Empty() => throw new NoSuchElementException()
+
+                val minRight = findMin(r)
+                Node(minRight, l, r.remove(minRight))
+            else if cmp < 0 then Node(v, l.remove(a), r)
+            else Node(v, l, r.remove(a))
+
+      override def toSequence(): Sequence[A] = ???
+
+      override def size(): Int = s match
+        case Empty() => 0
+        case Node(_, l, r) => 1 + l.size() + r.size()
+
+      override def ===(other: Set[A]): Boolean = ???
 
 @main def trySetADTModule =
   import SetADTs.*
