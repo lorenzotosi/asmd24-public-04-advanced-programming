@@ -133,6 +133,86 @@ abstract class SetADTCheck(name: String) extends Properties(name):
     && forAll: (s1: Set[Int], s2: Set[Int]) =>
       s1.intersection(s2).size() <= math.min(s1.size(), s2.size())
 
+  /**
+   *------------------------------------TASK
+   */
+
+  /**
+   * for union, commutativity property
+   * A U B = B U A
+   */
+
+  property("commutativity of union") =
+    forAll:(s1: Set[Int], s2: Set[Int]) =>
+      (s1 || s2) === (s2 || s1)
+
+  /**
+   * for union, associativity property
+   * A U (B U C) = (A U B) U C
+   */
+
+  property("associativity of union") =
+    forAll:(s1: Set[Int], s2: Set[Int], s3: Set[Int]) =>
+      s1.union(s2.union(s3)) === s1.union(s2).union(s3)
+
+  /**
+   * for union, idempotence property
+   * A U A = A
+   */
+
+  property("idempotence of union") =
+    forAll:(s: Set[Int]) =>
+      s.union(s) === s
+
+  /**
+   * for intersection, commutativity property
+   * A int B = B int A
+   */
+
+  property("commutativity of intersection") =
+    forAll:(s1: Set[Int], s2: Set[Int]) =>
+      s1.intersection(s2) === s2.intersection(s1)
+
+  /**
+   * for intersection, associativity property
+   * A int (B int C) = (A int B) int C
+   */
+
+  property("associativity of intersection") =
+    forAll:(s1: Set[Int], s2: Set[Int], s3: Set[Int]) =>
+      s1.intersection(s2.intersection(s3)) === s1.intersection(s2).intersection(s3)
+
+  /**
+   * for intersection, idempotence property
+   * A int A = A
+   */
+
+  property("idempotence of intersection") =
+    forAll:(s: Set[Int]) =>
+      s.intersection(s) === s
+
+/**
+ * cross property test: absorption and distributive law
+ * absorption:
+ * A U (A int B) = A
+ * A int (A U B) = A
+ * distributive:
+ * A U (B int C) = (A U B) int (A U C)
+ * A int (B U C) = (A int B) U (A int C)
+ */
+
+  property("absorption") =
+    forAll: (a: Set[Int], b: Set[Int]) =>
+      a.union(a.intersection(b)) === a
+      &&
+      a.intersection(a.union(b)) === a
+
+  property("distribution")=
+    forAll: (a: Set[Int], b: Set[Int], c: Set[Int]) =>
+      a.union(b.intersection(c)) === a.union(b).intersection(a.union(c))
+      &&
+      a.intersection(b.union(c)) === a.intersection(b).union(a.intersection(c))
+
 object BasicSetADTCheck extends SetADTCheck("SequenceBased Set"):
   val setADT: SetADT = BasicSetADT
 

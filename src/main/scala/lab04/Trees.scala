@@ -34,6 +34,25 @@ object Trees:
           else if cmp > 0 then Node(v, left, right.add(elem))
           else t
 
+      def remove(elem: A)(using ord: Ordering[A]): Tree[A] = t match
+        case Empty() => Empty()
+        case Node(v, l, r) =>
+          val cmp = ord.compare(elem, v)
+          if cmp == 0 then
+            if l == Empty() then r
+            else if r == Empty() then l
+            else
+              @tailrec
+              def findMin(tree: Tree[A]): A = tree match
+                case Node(minV, Empty(), _) => minV
+                case Node(_, left, _) => findMin(left)
+                case _ => throw new NoSuchElementException()
+
+              val minRight = findMin(r)
+              Node(minRight, l, r.remove(minRight))
+          else if cmp < 0 then Node(v, l.remove(elem), r)
+          else Node(v, l, r.remove(elem))
+
 
 @main def tryTrees() =
   import Trees.*

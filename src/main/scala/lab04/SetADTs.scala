@@ -5,7 +5,7 @@ import Sequence.*
 
 import Trees.*
 import Trees.Tree.*
-import Trees.Tree.{add as treeAdd, contains as treeContains}
+import Trees.Tree.{add as treeAdd, contains as treeContains, remove as treeRemove}
 import scala.annotation.tailrec
 
 object SetADTs:
@@ -60,7 +60,7 @@ object SetADTs:
         case Nil() => 0
 
       def ===(other: Set[A]): Boolean =
-        s.union(other).size() == s.size()
+        s.union(other).size() == s.size() && other.union(s).size() == other.size()
 
   object TreeBasedSetADT extends SetADT:
 
@@ -86,39 +86,36 @@ object SetADTs:
           case Node(v, l, r) => loop(r, loop(l, acc.add(v)))
         loop(other, s)
 
-
-      override def intersection(other: Set[A]): Set[A] = ???
-
-      override def remove(a: A): Set[A] = s match
-          case Empty() => Empty()
+      override def intersection(other: Set[A]): Set[A] =
+        def loop(t: Tree[A], acc: Set[A]): Set[A] = t match
+          case Empty() => acc
           case Node(v, l, r) =>
-            val cmp = hashOrdering.compare(a, v)
-            if cmp == 0 then
-              if l == Empty() then r
-              else if r == Empty() then l
-              else
-                @tailrec
-                def findMin(t: Tree[A]): A = t match
-                  case Node(minV, Empty(), _) => minV
-                  case Node(_, left, _) => findMin(left)
-                  case Empty() => throw new NoSuchElementException()
+            val newAcc = if s.contains(v) then acc.add(v) else acc
+            loop(r, loop(l, newAcc))
+        loop(other, Empty())
 
-                val minRight = findMin(r)
-                Node(minRight, l, r.remove(minRight))
-            else if cmp < 0 then Node(v, l.remove(a), r)
-            else Node(v, l, r.remove(a))
+      override def remove(a: A): Set[A] = treeRemove(s)(a)(using hashOrdering)
 
-      override def toSequence(): Sequence[A] = ???
+      override def toSequence(): Sequence[A] =
+        def append(s1: Sequence[A], s2: Sequence[A]): Sequence[A] = s1 match
+          case Nil() => s2
+          case Cons(h, t) => Cons(h, append(t, s2))
+
+        def traverse(t: Tree[A]): Sequence[A] = t match
+          case Empty() => Nil()
+          case Node(v, l, r) => append(traverse(l), Cons(v, traverse(r)))
+        traverse(s)
 
       override def size(): Int = s match
         case Empty() => 0
         case Node(_, l, r) => 1 + l.size() + r.size()
 
-      override def ===(other: Set[A]): Boolean = ???
+      override def ===(other: Set[A]): Boolean =
+        s.union(other).size() == s.size() && other.union(s).size() == other.size()
 
 @main def trySetADTModule =
   import SetADTs.*
-  val setADT: SetADT = BasicSetADT
+  val setADT: SetADT = TreeBasedSetADT
   import setADT.*
 
   val s1: Set[Int] = empty().add(10).add(20).add(30)
