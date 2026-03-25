@@ -113,6 +113,14 @@ given tryMonad: Monad[Try] with
 object TryMonadCheck extends MonadCheck[Try, Int]("Try Monad check"):
   val monad: Monad[Try] = summon[Monad[Try]]
 
+  override def checkEquality[I](m1: Try[I], m2: Try[I]): Prop = (m1, m2) match
+    case (Success(v1), Success(v2)) =>
+      Prop(v1 == v2)
+    case (Failure(e1), Failure(e2)) =>
+      Prop(e1.getClass == e2.getClass && e1.getMessage == e2.getMessage)
+    case _ =>
+      Prop(false)
+
   def tryGen[A: Arbitrary]: Gen[Try[A]] =
     for
       isSuccess <- Gen.oneOf(true, false)
@@ -124,6 +132,6 @@ object TryMonadCheck extends MonadCheck[Try, Int]("Try Monad check"):
   given arbitraryBindFunc: Arbitrary[Int => Try[Int]] = Arbitrary:
     Gen.oneOf[Int => Try[Int]](
       x => Success(x * 2),
-      x => Failure(IllegalArgumentException("Stato invalido")),
+      x => Failure(RuntimeException("Fallimento di test")),
       x => Success(0)
     )
