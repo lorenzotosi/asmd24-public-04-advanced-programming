@@ -8,6 +8,8 @@ trait WindowState:
   def initialWindow: Window
   def setSize(width: Int, height: Int): State[Window, Unit]
   def addButton(text: String, name: String): State[Window, Unit]
+  def addTextBox(text: String, name: String): State[Window, Unit]
+  def fromTextBox(name: String): State[Window, String]
   def addLabel(text: String, name: String): State[Window, Unit]
   def toLabel(text: String, name: String): State[Window, Unit]
   def show(): State[Window, Unit]
@@ -36,7 +38,11 @@ object WindowStateImpl extends WindowState:
     State(w => (w, cmd))  
   def eventStream(): State[Window, Stream[String]] =
     State(w => (w, Stream.generate(() => w.events().get)))
-  
+  def addTextBox(text: String, name: String): State[Window, Unit] =
+    State(w => ((w.addTextBox(text, name)), {}))
+  def fromTextBox(name: String): State[Window, String] =
+    State(w => (w, w.textOf(name)))
+
 @main def windowStateExample =
   import u04.*
   import WindowStateImpl.*
@@ -47,6 +53,7 @@ object WindowStateImpl extends WindowState:
     _ <- addButton(text = "inc", name = "IncButton")
     _ <- addButton(text = "dec", name = "DecButton")
     _ <- addButton(text = "quit", name = "QuitButton")
+    _ <- addTextBox(text = "0", name = "Input1")
     _ <- addLabel(text = "-", name = "Label1")
     _ <- show()
     e <- eventStream()
